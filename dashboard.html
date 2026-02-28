@@ -525,6 +525,12 @@
   </div>
 </div>
 
+<!-- RECOVERY MODE BANNER -->
+<div id="recoveryBanner" style="display:none;align-items:center;gap:12px;padding:8px 24px;background:rgba(255,170,0,0.08);border-bottom:1px solid var(--accent4);">
+  <div style="width:8px;height:8px;background:var(--accent4);border-radius:50%;animation:blink 1s infinite;"></div>
+  <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--accent4);letter-spacing:2px;">LOSS RECOVERY MODE ACTIVE — Filters tightened: 88+ min, 3+ goal lead</span>
+</div>
+
 <!-- BALANCE BAR -->
 <div class="balance-bar">
   <div class="bal-card">
@@ -672,9 +678,26 @@
                oninput="document.getElementById('minOddsLbl').textContent=(this.value/100).toFixed(2); updateSettings()">
       </div>
 
+      <div class="slider-wrap">
+        <div class="slider-lbl">
+          <span>Compound %</span>
+          <span class="slider-val" id="compoundPctLbl">10%</span>
+        </div>
+        <input type="range" min="1" max="25" value="10" id="compoundSlider"
+               oninput="document.getElementById('compoundPctLbl').textContent=this.value+'%'; updateSettings()">
+      </div>
+
       <div class="toggle-row">
         <span class="toggle-lbl">Auto-bet mode</span>
         <div class="toggle" id="autoBetToggle" onclick="this.classList.toggle('on'); updateSettings()"></div>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-lbl">Compound reinvestment</span>
+        <div class="toggle on" id="compoundToggle" onclick="this.classList.toggle('on'); updateSettings()"></div>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-lbl">Loss recovery mode</span>
+        <div class="toggle on" id="recoveryToggle" onclick="this.classList.toggle('on')"></div>
       </div>
       <div class="toggle-row">
         <span class="toggle-lbl">Stop on low balance</span>
@@ -713,6 +736,10 @@
           <span style="font-size:11px;color:var(--text3)">Avg odds</span>
           <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--accent2)" id="avgOdds">—</span>
         </div>
+        <div style="display:flex;justify-content:space-between;">
+          <span style="font-size:11px;color:var(--text3)">Today</span>
+          <span style="font-family:'Share Tech Mono',monospace;font-size:10px;" id="todayBanner">—</span>
+        </div>
       </div>
     </div>
 
@@ -720,6 +747,52 @@
             onclick="sendAction('refresh_balance')">↻ REFRESH BALANCES</button>
   </div>
 
+</div>
+
+<!-- ANALYTICS PANEL -->
+<div style="background:var(--bg2);border-top:1px solid var(--border);padding:20px 24px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);letter-spacing:3px;">ANALYTICS — ALL TIME</span>
+    <div style="display:flex;gap:16px;">
+      <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2)">BETS: <span style="color:#fff" id="lifetimeBets">0</span></span>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2)">WINS: <span style="color:var(--accent)" id="lifetimeWins">0</span></span>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2)">LOSSES: <span style="color:var(--accent3)" id="lifetimeLoss">0</span></span>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2)">WIN RATE: <span style="color:var(--accent2)" id="lifetimeWR">—</span></span>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2)">P&L: <span id="lifetimePnl">—</span></span>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2)">ROI: <span id="lifetimeROI">—</span></span>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2)">AVG ODDS: <span style="color:var(--accent2)" id="avgOddsLife">—</span></span>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:20px;">
+
+    <!-- P&L Curve -->
+    <div style="background:var(--bg3);border:1px solid var(--border);padding:14px;border-radius:3px;">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2);letter-spacing:2px;margin-bottom:10px;">P&L CURVE (LAST 50 BETS)</div>
+      <svg id="pnlCurve" width="100%" height="80" style="display:block;"></svg>
+    </div>
+
+    <!-- Daily P&L -->
+    <div style="background:var(--bg3);border:1px solid var(--border);padding:14px;border-radius:3px;">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2);letter-spacing:2px;margin-bottom:10px;">DAILY P&L (LAST 10 DAYS)</div>
+      <div id="dailyBars" style="display:flex;align-items:flex-end;gap:4px;height:70px;"></div>
+    </div>
+
+    <!-- Win rate by goal diff -->
+    <div style="background:var(--bg3);border:1px solid var(--border);padding:14px;border-radius:3px;">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2);letter-spacing:2px;margin-bottom:10px;">WIN RATE BY GOAL LEAD</div>
+      <div id="goalDiffBars"></div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2);letter-spacing:2px;margin-top:10px;margin-bottom:8px;">WIN RATE BY MINUTE</div>
+      <div id="minuteBars"></div>
+    </div>
+
+    <!-- League table -->
+    <div style="background:var(--bg3);border:1px solid var(--border);padding:14px;border-radius:3px;">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2);letter-spacing:2px;margin-bottom:10px;">WIN RATE BY LEAGUE</div>
+      <div id="leagueTable"></div>
+    </div>
+
+  </div>
 </div>
 </div>
 
@@ -777,11 +850,13 @@ function sendAction(action, extra = {}) {
 
 function updateSettings() {
   const settings = {
-    stake: parseFloat(document.getElementById('stakeInput').value) || 100,
-    min_minute: parseInt(document.getElementById('minMinSlider').value),
-    min_goal_lead: parseInt(document.getElementById('minGoalSlider').value),
-    min_odds: parseFloat(document.getElementById('minOddsSlider').value) / 100,
-    auto_bet: document.getElementById('autoBetToggle').classList.contains('on'),
+    stake:            parseFloat(document.getElementById('stakeInput').value) || 100,
+    min_minute:       parseInt(document.getElementById('minMinSlider').value),
+    min_goal_lead:    parseInt(document.getElementById('minGoalSlider').value),
+    min_odds:         parseFloat(document.getElementById('minOddsSlider').value) / 100,
+    auto_bet:         document.getElementById('autoBetToggle').classList.contains('on'),
+    compound_enabled: document.getElementById('compoundToggle').classList.contains('on'),
+    compound_percent: parseInt(document.getElementById('compoundSlider').value),
   };
   sendAction('settings', { settings });
 }
@@ -840,6 +915,18 @@ function handleMessage(msg) {
     case 'bet_placed':
       bets.unshift(msg.bet);
       renderBetLog();
+      break;
+
+    case 'analytics':
+      handleAnalytics(msg.data);
+      break;
+
+    case 'recovery_mode':
+      setRecoveryMode(msg.active);
+      break;
+
+    case 'stake_updated':
+      document.getElementById('stakeInput').value = msg.stake;
       break;
   }
 }
@@ -992,6 +1079,136 @@ function addAlert(msg, color) {
   item.innerHTML = `<span class="a-time">${time}</span><span class="a-${color}">${msg}</span>`;
   feed.insertBefore(item, feed.firstChild);
   while (feed.children.length > 30) feed.removeChild(feed.lastChild);
+}
+
+// ── Analytics handler ──
+function handleAnalytics(data) {
+  if (!data || data.total_bets === 0) return;
+
+  // Update lifetime stats
+  document.getElementById('lifetimeBets').textContent  = data.total_bets;
+  document.getElementById('lifetimeWins').textContent  = data.wins;
+  document.getElementById('lifetimeLoss').textContent  = data.losses;
+  document.getElementById('lifetimeWR').textContent    = data.win_rate + '%';
+  document.getElementById('lifetimeROI').textContent   = (data.roi >= 0 ? '+' : '') + data.roi + '%';
+  document.getElementById('lifetimeROI').style.color   = data.roi >= 0 ? 'var(--accent)' : 'var(--accent3)';
+  document.getElementById('lifetimePnl').textContent   = (data.total_pnl >= 0 ? '+' : '') + '₦' + fmt(Math.abs(data.total_pnl));
+  document.getElementById('lifetimePnl').style.color   = data.total_pnl >= 0 ? 'var(--accent)' : 'var(--accent3)';
+  document.getElementById('avgOddsLife').textContent   = data.avg_odds;
+
+  // Today banner
+  if (data.today) {
+    const t = data.today;
+    document.getElementById('todayBanner').textContent =
+      `TODAY: ${t.wins}W / ${t.losses}L  |  P&L: ${t.pnl >= 0 ? '+' : ''}₦${fmt(Math.abs(t.pnl))}  |  Win rate: ${t.win_rate}%`;
+    document.getElementById('todayBanner').style.color = t.pnl >= 0 ? 'var(--accent)' : 'var(--accent3)';
+  }
+
+  // P&L curve chart
+  if (data.pnl_curve && data.pnl_curve.length > 1) renderPnlChart(data.pnl_curve);
+
+  // Daily P&L bar chart
+  if (data.daily_pnl && data.daily_pnl.length > 0) renderDailyChart(data.daily_pnl);
+
+  // League table
+  if (data.league_stats && data.league_stats.length > 0) renderLeagueTable(data.league_stats);
+
+  // Goal diff stats
+  if (data.goal_diff_stats) renderGoalDiffBars(data.goal_diff_stats);
+
+  // Minute stats
+  if (data.minute_stats) renderMinuteBars(data.minute_stats);
+}
+
+// ── P&L Curve (SVG sparkline) ──
+function renderPnlChart(curve) {
+  const svg = document.getElementById('pnlCurve');
+  if (!svg) return;
+  const W = svg.clientWidth || 280, H = 80;
+  const vals = curve.map(p => p.pnl);
+  const minV = Math.min(...vals, 0), maxV = Math.max(...vals, 0);
+  const range = maxV - minV || 1;
+  const pts = vals.map((v, i) => {
+    const x = (i / (vals.length - 1)) * W;
+    const y = H - ((v - minV) / range) * (H - 8) - 4;
+    return `${x},${y}`;
+  }).join(' ');
+  const lastVal = vals[vals.length - 1];
+  const color = lastVal >= 0 ? '#00ff88' : '#ff4466';
+  svg.innerHTML = `
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.9"/>
+    <line x1="0" y1="${H - ((0 - minV) / range) * (H-8) - 4}" x2="${W}" y2="${H - ((0 - minV) / range) * (H-8) - 4}"
+          stroke="#1e2d3d" stroke-width="1" stroke-dasharray="3,3"/>`;
+}
+
+// ── Daily P&L bars ──
+function renderDailyChart(daily) {
+  const el = document.getElementById('dailyBars');
+  if (!el) return;
+  const max = Math.max(...daily.map(d => Math.abs(d.pnl)), 1);
+  el.innerHTML = daily.slice(-10).map(d => {
+    const h = Math.max(4, Math.abs(d.pnl) / max * 50);
+    const col = d.pnl >= 0 ? 'var(--accent)' : 'var(--accent3)';
+    const label = d.date.slice(5); // MM-DD
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:${col}">${d.pnl >= 0 ? '+' : ''}${Math.round(d.pnl)}</div>
+      <div style="width:100%;height:${h}px;background:${col};opacity:0.7;border-radius:1px;min-height:3px;"></div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--text2)">${label}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── League table ──
+function renderLeagueTable(leagues) {
+  const el = document.getElementById('leagueTable');
+  if (!el) return;
+  el.innerHTML = leagues.slice(0, 6).map(l => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(30,45,61,0.5);">
+      <span style="font-size:11px;color:var(--text3);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.league}</span>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);margin:0 8px">${l.total}</span>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:${l.win_rate >= 90 ? 'var(--accent)' : l.win_rate >= 75 ? 'var(--accent4)' : 'var(--accent3)'}">${l.win_rate}%</span>
+    </div>`).join('');
+}
+
+// ── Goal diff bars ──
+function renderGoalDiffBars(stats) {
+  const el = document.getElementById('goalDiffBars');
+  if (!el) return;
+  el.innerHTML = stats.map(s => `
+    <div style="margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px;">
+        <span style="color:var(--text3)">+${s.goal_diff} goals</span>
+        <span style="font-family:'Share Tech Mono',monospace;color:var(--accent)">${s.win_rate}%</span>
+      </div>
+      <div style="background:var(--border);border-radius:2px;height:4px;">
+        <div style="background:var(--accent);height:4px;border-radius:2px;width:${s.win_rate}%;transition:width 0.5s;"></div>
+      </div>
+      <div style="font-size:9px;color:var(--text2);margin-top:1px;font-family:'Share Tech Mono',monospace">${s.total} bets</div>
+    </div>`).join('');
+}
+
+// ── Minute bars ──
+function renderMinuteBars(stats) {
+  const el = document.getElementById('minuteBars');
+  if (!el) return;
+  el.innerHTML = stats.map(s => `
+    <div style="margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px;">
+        <span style="color:var(--text3)">${s.minute}</span>
+        <span style="font-family:'Share Tech Mono',monospace;color:var(--accent2)">${s.win_rate}%</span>
+      </div>
+      <div style="background:var(--border);border-radius:2px;height:4px;">
+        <div style="background:var(--accent2);height:4px;border-radius:2px;width:${s.win_rate}%;transition:width 0.5s;"></div>
+      </div>
+      <div style="font-size:9px;color:var(--text2);margin-top:1px;font-family:'Share Tech Mono',monospace">${s.total} bets</div>
+    </div>`).join('');
+}
+
+// ── Recovery mode banner ──
+function setRecoveryMode(active) {
+  const banner = document.getElementById('recoveryBanner');
+  if (!banner) return;
+  banner.style.display = active ? 'flex' : 'none';
 }
 
 // ── Clock ──
