@@ -4,24 +4,24 @@
 # ─────────────────────────────────────────────
 
 # ── API-FOOTBALL (free at api-football.com) ──
-API_FOOTBALL_KEY = "YOUR_API_FOOTBALL_KEY_HERE"
+API_FOOTBALL_KEY = "44e824e2fe678d3fabfa60f10c9f2c42"
 
 # ── SPORTYBET CREDENTIALS ──
-SPORTYBET_USERNAME = "YOUR_SPORTYBET_PHONE_OR_EMAIL"
-SPORTYBET_PASSWORD = "YOUR_SPORTYBET_PASSWORD"
+SPORTYBET_USERNAME = "+2349153269357"
+SPORTYBET_PASSWORD = "PEJStar123"
 
 # ── BETKING CREDENTIALS ──
-BETKING_USERNAME = "YOUR_BETKING_PHONE_OR_EMAIL"
-BETKING_PASSWORD = "YOUR_BETKING_PASSWORD"
+BETKING_USERNAME = "+2349153269357"
+BETKING_PASSWORD = "PEJStar123"
 
 # ── TELEGRAM ALERTS ──
 # 1. Message @BotFather on Telegram → /newbot → copy the token below
 # 2. Message your new bot once, then visit:
 #    https://api.telegram.org/bot<YOUR_TOKEN>/getUpdates
 #    Copy the "id" number from "chat" — that's your CHAT_ID
-TELEGRAM_BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"
-TELEGRAM_CHAT_ID   = "YOUR_TELEGRAM_CHAT_ID"
-TELEGRAM_ENABLED   = False   # Set True once token and chat_id are filled in
+TELEGRAM_BOT_TOKEN = "8413961592:AAHqYIIkw6SvPoFE22eACeaeujuazA8VKiY"
+TELEGRAM_CHAT_ID   = "6397640917"
+TELEGRAM_ENABLED   = True   # Set True once token and chat_id are filled in
 
 # ── BOT SETTINGS (defaults — all adjustable from dashboard) ──
 DEFAULT_STAKE    = 100    # Naira per bet
