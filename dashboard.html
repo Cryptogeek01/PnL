@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BetBot Pro — Live Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;600;700;900&family=Barlow+Condensed:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c10;
+    --bg2: #0d1117;
+    --bg3: #111820;
+    --border: #1e2d3d;
+    --accent: #00ff88;
+    --accent2: #00c4ff;
+    --accent3: #ff4466;
+    --accent4: #ffaa00;
+    --text: #c8d8e8;
+    --text2: #5a7a9a;
+    --text3: #8aa0b8;
+    --win: #00ff88;
+    --loss: #ff4466;
+    --pending: #ffaa00;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,136,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.025) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { position: relative; z-index: 1; }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(8,12,16,0.97);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+
+  .logo { display: flex; align-items: center; gap: 12px; }
+
+  .logo-hex {
+    width: 34px; height: 34px;
+    background: var(--accent);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    animation: hex-pulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes hex-pulse {
+    0%,100%{filter:drop-shadow(0 0 4px rgba(0,255,136,0.4))}
+    50%{filter:drop-shadow(0 0 14px rgba(0,255,136,0.7))}
+  }
+
+  .logo-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 20px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .logo-text span { color: var(--accent); }
+
+  .header-right { display: flex; align-items: center; gap: 18px; }
+
+  .ws-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+  }
+
+  .ws-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent3);
+    transition: background 0.3s;
+  }
+
+  .ws-dot.connected { background: var(--accent); animation: blink 1.2s infinite; }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .clock {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: var(--text2);
+    letter-spacing: 1px;
+  }
+
+  /* CONTROL BAR */
+  .control-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 24px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .bot-badge {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 16px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    min-width: 140px;
+  }
+
+  .bot-badge.initializing { border-color: var(--accent2); color: var(--accent2); background: rgba(0,196,255,0.05); }
+  .bot-badge.ready        { border-color: var(--text2);   color: var(--text2); }
+  .bot-badge.running      { border-color: var(--accent);  color: var(--accent); background: rgba(0,255,136,0.05); }
+  .bot-badge.paused       { border-color: var(--accent4); color: var(--accent4); background: rgba(255,170,0,0.05); }
+  .bot-badge.error        { border-color: var(--accent3); color: var(--accent3); background: rgba(255,68,102,0.05); }
+
+  .btn {
+    padding: 7px 18px;
+    border: 1px solid;
+    border-radius: 3px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: transparent;
+  }
+
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn-init  { border-color: var(--accent2); color: var(--accent2); }
+  .btn-init:hover:not(:disabled)  { background: rgba(0,196,255,0.12); }
+  .btn-start { border-color: var(--accent);  color: var(--accent); }
+  .btn-start:hover:not(:disabled) { background: rgba(0,255,136,0.12); }
+  .btn-pause { border-color: var(--accent4); color: var(--accent4); }
+  .btn-pause:hover:not(:disabled) { background: rgba(255,170,0,0.12); }
+  .btn-stop  { border-color: var(--accent3); color: var(--accent3); }
+  .btn-stop:hover:not(:disabled)  { background: rgba(255,68,102,0.12); }
+
+  .divider { width: 1px; height: 28px; background: var(--border); }
+
+  .stake-wrap { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  .stake-label { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text2); letter-spacing: 1px; }
+  .stake-input {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    padding: 5px 10px;
+    width: 100px;
+    border-radius: 3px;
+    text-align: right;
+  }
+  .stake-input:focus { outline: none; border-color: var(--accent); }
+
+  .bm-pills { display: flex; gap: 6px; }
+  .bm-pill {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: 1px solid;
+  }
+  .bm-pill.sporty  { border-color: #ff6b35; color: #ff6b35; background: rgba(255,107,53,0.1); }
+  .bm-pill.betking { border-color: #00c4ff; color: #00c4ff; background: rgba(0,196,255,0.1); }
+
+  /* BALANCE BAR */
+  .balance-bar {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .bal-card {
+    background: var(--bg3);
+    padding: 10px 18px;
+  }
+
+  .bal-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--text2);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .bal-value {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 20px;
+    color: #fff;
+  }
+
+  .bal-sub { font-size: 10px; color: var(--text2); margin-top: 2px; font-family: 'Share Tech Mono', monospace; }
+
+  /* MAIN LAYOUT */
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 1fr 340px;
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .panel {
+    background: var(--bg);
+    padding: 18px;
+    overflow-y: auto;
+    max-height: calc(100vh - 230px);
+  }
+
+  .panel-hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .panel-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text2);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 2px;
+  }
+
+  .badge-green { color: var(--accent); background: rgba(0,255,136,0.08); }
+  .badge-blue  { color: var(--accent2); background: rgba(0,196,255,0.08); }
+
+  /* STAT ROW */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(6,1fr);
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stat-cell {
+    background: var(--bg2);
+    padding: 14px 18px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-cell::before {
+    content:'';
+    position:absolute;
+    top:0;left:0;right:0;
+    height:2px;
+  }
+  .sc-green::before{background:var(--accent)}
+  .sc-blue::before{background:var(--accent2)}
+  .sc-red::before{background:var(--accent3)}
+  .sc-yellow::before{background:var(--accent4)}
+
+  .sc-label { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--text2); letter-spacing:2px; margin-bottom:6px; }
+  .sc-val { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:26px; line-height:1; }
+  .sc-sub { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--text2); margin-top:3px; }
+  .col-green{color:var(--accent)} .col-blue{color:var(--accent2)} .col-red{color:var(--accent3)} .col-yellow{color:var(--accent4)} .col-white{color:#fff}
+
+  /* MATCH CARDS */
+  .match-filters { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+  .chip {
+    padding:4px 10px; border-radius:20px;
+    font-size:10px; font-family:'Share Tech Mono',monospace;
+    letter-spacing:1px; border:1px solid var(--border);
+    color:var(--text2); cursor:pointer; transition:all 0.15s;
+  }
+  .chip.on { border-color:var(--accent2); color:var(--accent2); background:rgba(0,196,255,0.08); }
+
+  .match-list { display:flex; flex-direction:column; gap:8px; }
+
+  .match-card {
+    background:var(--bg2);
+    border:1px solid var(--border);
+    border-radius:3px;
+    padding:12px 14px;
+    cursor:pointer;
+    transition:all 0.15s;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .match-card:hover { border-color:var(--text2); }
+  .match-card.opp { border-color:var(--accent); background:rgba(0,255,136,0.04); }
+  .match-card.opp:hover { background:rgba(0,255,136,0.07); }
+
+  .opp-tag {
+    position:absolute; top:0; right:0;
+    background:var(--accent); color:#000;
+    font-family:'Share Tech Mono',monospace;
+    font-size:8px; font-weight:700;
+    letter-spacing:1px; padding:2px 8px;
+  }
+
+  .mc-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .mc-league { font-size:10px; color:var(--text2); font-family:'Share Tech Mono',monospace; letter-spacing:1px; }
+  .mc-min { font-family:'Share Tech Mono',monospace; font-size:11px; font-weight:700; }
+  .mc-min.live { color:var(--accent3); }
+  .mc-min.safe { color:var(--accent); }
+
+  .mc-teams { display:flex; align-items:center; justify-content:space-between; gap:6px; }
+  .mc-team { font-weight:600; font-size:13px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mc-team.away { text-align:right; }
+
+  .mc-score {
+    font-family:'Barlow Condensed',sans-serif;
+    font-weight:900; font-size:22px;
+    letter-spacing:2px;
+    display:flex; gap:4px; align-items:center;
+  }
+
+  .mc-footer { display:flex; justify-content:space-between; align-items:center; margin-top:8px; }
+  .odds-tag {
+    font-family:'Share Tech Mono',monospace;
+    font-size:10px; padding:3px 8px;
+    border-radius:2px; border:1px solid;
+  }
+  .odds-good { color:var(--accent); border-color:var(--accent); background:rgba(0,255,136,0.08); }
+  .odds-ok   { color:var(--accent4); border-color:var(--accent4); background:rgba(255,170,0,0.08); }
+
+  .mc-bet-btn {
+    font-family:'Barlow Condensed',sans-serif;
+    font-weight:700; font-size:11px;
+    letter-spacing:2px; padding:4px 10px;
+    background: rgba(0,255,136,0.1);
+    border:1px solid var(--accent);
+    color:var(--accent); border-radius:2px;
+    cursor:pointer;
+    display:none;
+  }
+  .match-card.opp:hover .mc-bet-btn { display:block; }
+
+  .empty { text-align:center; padding:40px 20px; color:var(--text2); font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:1px; }
+
+  /* BET LOG */
+  .log-table { width:100%; border-collapse:collapse; font-size:11px; }
+  .log-table th {
+    font-family:'Share Tech Mono',monospace; font-size:9px;
+    color:var(--text2); letter-spacing:2px;
+    text-align:left; padding:6px 8px;
+    border-bottom:1px solid var(--border);
+    position:sticky; top:0; background:var(--bg);
+  }
+  .log-table td { padding:7px 8px; border-bottom:1px solid rgba(30,45,61,0.4); font-family:'Share Tech Mono',monospace; }
+  .log-table tr:hover td { background:rgba(255,255,255,0.015); }
+
+  .s-win     { color:var(--win); }
+  .s-loss    { color:var(--loss); }
+  .s-pending { color:var(--pending); }
+  .s-failed  { color:var(--text2); }
+
+  /* SIDEBAR */
+  .sidebar {
+    background:var(--bg2);
+    border-left:1px solid var(--border);
+    padding:18px;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    overflow-y:auto;
+    max-height:calc(100vh - 230px);
+  }
+
+  .cfg-title {
+    font-family:'Share Tech Mono',monospace;
+    font-size:9px; color:var(--text2);
+    letter-spacing:3px; text-transform:uppercase;
+    margin-bottom:10px;
+    padding-bottom:8px;
+    border-bottom:1px solid var(--border);
+  }
+
+  .slider-wrap { margin-bottom:12px; }
+  .slider-lbl { display:flex; justify-content:space-between; font-size:11px; color:var(--text3); margin-bottom:5px; }
+  .slider-val { font-family:'Share Tech Mono',monospace; color:var(--accent); }
+
+  input[type=range] {
+    width:100%; -webkit-appearance:none;
+    height:3px; background:var(--border);
+    border-radius:2px; outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance:none; width:13px; height:13px;
+    background:var(--accent); border-radius:50%; cursor:pointer;
+  }
+
+  .toggle-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .toggle-lbl { font-size:12px; color:var(--text3); }
+  .toggle {
+    width:34px; height:18px; background:var(--border);
+    border-radius:9px; cursor:pointer; position:relative; transition:background 0.2s;
+  }
+  .toggle.on { background:var(--accent); }
+  .toggle::after {
+    content:''; position:absolute;
+    width:12px; height:12px; background:#fff;
+    border-radius:50%; top:3px; left:3px; transition:transform 0.2s;
+  }
+  .toggle.on::after { transform:translateX(16px); }
+
+  /* ALERT FEED */
+  .alert-feed { display:flex; flex-direction:column; gap:5px; max-height:220px; overflow-y:auto; }
+  .alert-item {
+    display:flex; gap:8px; align-items:flex-start;
+    font-size:10px; font-family:'Share Tech Mono',monospace;
+    padding:5px 8px; border-radius:2px;
+    background:rgba(255,255,255,0.015);
+  }
+  .a-time { color:var(--text2); white-space:nowrap; }
+  .a-green { color:var(--accent); }
+  .a-yellow { color:var(--accent4); }
+  .a-red { color:var(--accent3); }
+  .a-blue { color:var(--accent2); }
+
+  /* Result buttons */
+  .result-btns { display:flex; gap:4px; }
+  .rbtn {
+    font-size:9px; padding:2px 6px;
+    border-radius:2px; cursor:pointer; border:1px solid;
+    font-family:'Share Tech Mono',monospace; letter-spacing:1px;
+    background:transparent;
+  }
+  .rbtn-win  { border-color:var(--accent); color:var(--accent); }
+  .rbtn-loss { border-color:var(--accent3); color:var(--accent3); }
+
+  ::-webkit-scrollbar { width:3px; height:3px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-hex"></div>
+    <div class="logo-text">Bet<span>Bot</span> Pro</div>
+  </div>
+  <div class="header-right">
+    <div class="bm-pills">
+      <div class="bm-pill sporty">SportyBet</div>
+      <div class="bm-pill betking">BetKing</div>
+    </div>
+    <div class="ws-status">
+      <div class="ws-dot" id="wsDot"></div>
+      <span id="wsLabel" style="color:var(--text2)">DISCONNECTED</span>
+    </div>
+    <div class="clock" id="clock">00:00:00</div>
+  </div>
+</header>
+
+<!-- CONTROL BAR -->
+<div class="control-bar">
+  <div class="bot-badge ready" id="botBadge">
+    <div class="ws-dot" id="statusDot" style="background:var(--text2)"></div>
+    <span id="statusText">NOT INITIALIZED</span>
+  </div>
+
+  <button class="btn btn-init"  id="btnInit"  onclick="sendAction('init')">⚡ INITIALIZE</button>
+  <button class="btn btn-start" id="btnStart" onclick="sendAction('start')"  disabled>▶ START</button>
+  <button class="btn btn-pause" id="btnPause" onclick="sendAction('pause')"  disabled>⏸ PAUSE</button>
+  <button class="btn btn-stop"  id="btnStop"  onclick="sendAction('stop')"   disabled>■ STOP</button>
+
+  <div class="divider"></div>
+
+  <div class="stake-wrap">
+    <span class="stake-label">STAKE / BET (₦)</span>
+    <input type="number" class="stake-input" id="stakeInput" value="100" min="50" step="50"
+           onchange="updateSettings()">
+    <span class="stake-label" style="color:var(--accent3); font-size:9px">MIN ₦50</span>
+  </div>
+</div>
+
+<!-- BALANCE BAR -->
+<div class="balance-bar">
+  <div class="bal-card">
+    <div class="bal-label">Total Capital</div>
+    <div class="bal-value" id="totalCap">₦—</div>
+    <div class="bal-sub">combined balance</div>
+  </div>
+  <div class="bal-card">
+    <div class="bal-label">SportyBet</div>
+    <div class="bal-value" id="sportyBal">₦—</div>
+    <div class="bal-sub">sportybet.com</div>
+  </div>
+  <div class="bal-card">
+    <div class="bal-label">BetKing</div>
+    <div class="bal-value" id="betkingBal">₦—</div>
+    <div class="bal-sub">betking.com</div>
+  </div>
+  <div class="bal-card">
+    <div class="bal-label">Total P&L</div>
+    <div class="bal-value" id="pnlVal">₦—</div>
+    <div class="bal-sub" id="pnlSub">this session</div>
+  </div>
+  <div class="bal-card">
+    <div class="bal-label">Bets Placed</div>
+    <div class="bal-value" id="totalBets">0</div>
+    <div class="bal-sub" id="pendingSub">0 pending</div>
+  </div>
+  <div class="bal-card">
+    <div class="bal-label">Win Rate</div>
+    <div class="bal-value" id="winRate" style="color:var(--accent2)">—</div>
+    <div class="bal-sub" id="winLossLabel">0W / 0L</div>
+  </div>
+</div>
+
+<!-- STAT ROW -->
+<div class="stat-row">
+  <div class="stat-cell sc-green">
+    <div class="sc-label">Opportunities</div>
+    <div class="sc-val col-green" id="oppCount">0</div>
+    <div class="sc-sub">85+ min, 2+ goal lead</div>
+  </div>
+  <div class="stat-cell sc-blue">
+    <div class="sc-label">Live Matches</div>
+    <div class="sc-val col-blue" id="liveCount">0</div>
+    <div class="sc-sub">scanning globally</div>
+  </div>
+  <div class="stat-cell sc-green">
+    <div class="sc-label">Today Wins</div>
+    <div class="sc-val col-green" id="winsVal">0</div>
+    <div class="sc-sub" id="winPnlSub">+₦0.00</div>
+  </div>
+  <div class="stat-cell sc-red">
+    <div class="sc-label">Today Losses</div>
+    <div class="sc-val col-red" id="lossVal">0</div>
+    <div class="sc-sub" id="lossPnlSub">-₦0.00</div>
+  </div>
+  <div class="stat-cell sc-yellow">
+    <div class="sc-label">Pending</div>
+    <div class="sc-val col-yellow" id="pendingVal">0</div>
+    <div class="sc-sub">awaiting result</div>
+  </div>
+  <div class="stat-cell sc-blue">
+    <div class="sc-label">Last Scan</div>
+    <div class="sc-val col-white" style="font-size:16px;" id="lastScan">—</div>
+    <div class="sc-sub" id="nextScan">next: —</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- LIVE MATCHES -->
+  <div class="panel">
+    <div class="panel-hdr">
+      <div class="panel-title">Live Match Scanner</div>
+      <div class="badge badge-blue" id="matchBadge">0 LIVE</div>
+    </div>
+    <div class="match-filters">
+      <div class="chip on" onclick="filterMatches('all',this)">ALL</div>
+      <div class="chip" onclick="filterMatches('opp',this)">OPPORTUNITIES</div>
+      <div class="chip" onclick="filterMatches('85',this)">85+ MIN</div>
+      <div class="chip" onclick="filterMatches('2g',this)">2+ GOAL LEAD</div>
+    </div>
+    <div class="match-list" id="matchList">
+      <div class="empty">[ Initialize bot to start scanning ]</div>
+    </div>
+  </div>
+
+  <!-- BET LOG -->
+  <div class="panel">
+    <div class="panel-hdr">
+      <div class="panel-title">Bet Log</div>
+      <div class="badge badge-green" id="betBadge">0 BETS</div>
+    </div>
+    <table class="log-table">
+      <thead>
+        <tr>
+          <th>TIME</th>
+          <th>MATCH</th>
+          <th>BM</th>
+          <th>ODDS</th>
+          <th>STAKE</th>
+          <th>P&L</th>
+          <th>STATUS</th>
+          <th>RESULT</th>
+        </tr>
+      </thead>
+      <tbody id="betLog">
+        <tr><td colspan="8" class="empty">No bets yet</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <!-- BOT CONFIG -->
+    <div>
+      <div class="cfg-title">Bot Configuration</div>
+
+      <div class="slider-wrap">
+        <div class="slider-lbl">
+          <span>Min Minute</span>
+          <span class="slider-val" id="minMinLbl">85'</span>
+        </div>
+        <input type="range" min="80" max="90" value="85" id="minMinSlider"
+               oninput="document.getElementById('minMinLbl').textContent=this.value+`'`; updateSettings()">
+      </div>
+
+      <div class="slider-wrap">
+        <div class="slider-lbl">
+          <span>Min Goal Lead</span>
+          <span class="slider-val" id="minGoalLbl">2</span>
+        </div>
+        <input type="range" min="1" max="5" value="2" id="minGoalSlider"
+               oninput="document.getElementById('minGoalLbl').textContent=this.value; updateSettings()">
+      </div>
+
+      <div class="slider-wrap">
+        <div class="slider-lbl">
+          <span>Min Odds</span>
+          <span class="slider-val" id="minOddsLbl">1.02</span>
+        </div>
+        <input type="range" min="100" max="120" value="102" id="minOddsSlider"
+               oninput="document.getElementById('minOddsLbl').textContent=(this.value/100).toFixed(2); updateSettings()">
+      </div>
+
+      <div class="toggle-row">
+        <span class="toggle-lbl">Auto-bet mode</span>
+        <div class="toggle" id="autoBetToggle" onclick="this.classList.toggle('on'); updateSettings()"></div>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-lbl">Stop on low balance</span>
+        <div class="toggle on" id="stopLossToggle" onclick="this.classList.toggle('on'); updateSettings()"></div>
+      </div>
+    </div>
+
+    <!-- ACTIVITY FEED -->
+    <div>
+      <div class="cfg-title">Activity Feed</div>
+      <div class="alert-feed" id="alertFeed">
+        <div class="alert-item">
+          <span class="a-time">--:--:--</span>
+          <span class="a-blue">BetBot Pro ready. Click INITIALIZE to connect to bookmakers.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SESSION INFO -->
+    <div>
+      <div class="cfg-title">Session</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div style="display:flex;justify-content:space-between;">
+          <span style="font-size:11px;color:var(--text3)">Started</span>
+          <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--accent2)" id="sessStart">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;">
+          <span style="font-size:11px;color:var(--text3)">Duration</span>
+          <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--accent2)" id="sessDur">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;">
+          <span style="font-size:11px;color:var(--text3)">ROI</span>
+          <span style="font-family:'Share Tech Mono',monospace;font-size:11px;" id="roiVal">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;">
+          <span style="font-size:11px;color:var(--text3)">Avg odds</span>
+          <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--accent2)" id="avgOdds">—</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn" style="border-color:var(--text2);color:var(--text2);font-size:11px;"
+            onclick="sendAction('refresh_balance')">↻ REFRESH BALANCES</button>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ── WebSocket connection ──
+let ws = null;
+let reconnectTimer = null;
+let sessionStart = null;
+let sessInterval = null;
+let matchFilter = 'all';
+let allMatches = [];
+let allOpps = [];
+let bets = [];
+let totalBetCount = 0;
+let initialCapital = null;
+
+function connect() {
+  ws = new WebSocket(`ws://${location.host}/ws`);
+
+  ws.onopen = () => {
+    setWsStatus(true);
+    addAlert('Connected to BetBot backend.', 'blue');
+    clearTimeout(reconnectTimer);
+  };
+
+  ws.onclose = () => {
+    setWsStatus(false);
+    addAlert('Connection lost. Reconnecting...', 'red');
+    reconnectTimer = setTimeout(connect, 3000);
+  };
+
+  ws.onerror = () => setWsStatus(false);
+
+  ws.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      handleMessage(msg);
+    } catch(err) { console.error('Parse error:', err); }
+  };
+}
+
+function setWsStatus(connected) {
+  document.getElementById('wsDot').className = 'ws-dot' + (connected ? ' connected' : '');
+  document.getElementById('wsLabel').textContent = connected ? 'LIVE' : 'DISCONNECTED';
+  document.getElementById('wsLabel').style.color = connected ? 'var(--accent)' : 'var(--text2)';
+}
+
+function sendAction(action, extra = {}) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    addAlert('Not connected to backend', 'red');
+    return;
+  }
+  ws.send(JSON.stringify({ action, ...extra }));
+}
+
+function updateSettings() {
+  const settings = {
+    stake: parseFloat(document.getElementById('stakeInput').value) || 100,
+    min_minute: parseInt(document.getElementById('minMinSlider').value),
+    min_goal_lead: parseInt(document.getElementById('minGoalSlider').value),
+    min_odds: parseFloat(document.getElementById('minOddsSlider').value) / 100,
+    auto_bet: document.getElementById('autoBetToggle').classList.contains('on'),
+  };
+  sendAction('settings', { settings });
+}
+
+// ── Message handler ──
+function handleMessage(msg) {
+  switch(msg.type) {
+
+    case 'status':
+      setStatus(msg.status);
+      break;
+
+    case 'log':
+      addAlert(msg.msg, msg.color || 'blue');
+      break;
+
+    case 'balances':
+      document.getElementById('sportyBal').textContent = '₦' + fmt(msg.sportybet);
+      document.getElementById('betkingBal').textContent = '₦' + fmt(msg.betking);
+      document.getElementById('totalCap').textContent = '₦' + fmt(msg.total);
+      if (initialCapital === null && msg.total > 0) initialCapital = msg.total;
+      const pnlEl = document.getElementById('pnlVal');
+      pnlEl.textContent = (msg.pnl >= 0 ? '+' : '') + '₦' + fmt(Math.abs(msg.pnl));
+      pnlEl.style.color = msg.pnl >= 0 ? 'var(--accent)' : 'var(--accent3)';
+      break;
+
+    case 'stats':
+      document.getElementById('winsVal').textContent = msg.wins;
+      document.getElementById('lossVal').textContent = msg.losses;
+      document.getElementById('pendingVal').textContent = msg.pending;
+      document.getElementById('winLossLabel').textContent = `${msg.wins}W / ${msg.losses}L`;
+      document.getElementById('winRate').textContent = msg.win_rate !== null ? msg.win_rate + '%' : '—';
+      document.getElementById('winPnlSub').textContent = '+₦' + fmt(msg.win_pnl);
+      document.getElementById('lossPnlSub').textContent = '-₦' + fmt(msg.loss_pnl);
+      document.getElementById('totalBets').textContent = msg.total_bets;
+      document.getElementById('pendingSub').textContent = msg.pending + ' pending';
+      document.getElementById('betBadge').textContent = msg.total_bets + ' BETS';
+      if (initialCapital && initialCapital > 0) {
+        const roi = ((msg.pnl / initialCapital) * 100).toFixed(1);
+        const roiEl = document.getElementById('roiVal');
+        roiEl.textContent = (msg.pnl >= 0 ? '+' : '') + roi + '%';
+        roiEl.style.color = msg.pnl >= 0 ? 'var(--accent)' : 'var(--accent3)';
+      }
+      break;
+
+    case 'matches':
+      allMatches = msg.matches || [];
+      allOpps = msg.opportunities || [];
+      document.getElementById('liveCount').textContent = msg.live_count;
+      document.getElementById('oppCount').textContent = msg.opp_count;
+      document.getElementById('matchBadge').textContent = msg.live_count + ' LIVE';
+      document.getElementById('lastScan').textContent = new Date().toTimeString().split(' ')[0];
+      renderMatches();
+      break;
+
+    case 'bet_placed':
+      bets.unshift(msg.bet);
+      renderBetLog();
+      break;
+  }
+}
+
+// ── Status ──
+function setStatus(s) {
+  const badge = document.getElementById('botBadge');
+  const dot = document.getElementById('statusDot');
+  const txt = document.getElementById('statusText');
+
+  const states = {
+    initializing: { cls:'initializing', label:'INITIALIZING', dot:'var(--accent2)', start:false, pause:false, stop:false },
+    ready:        { cls:'ready',        label:'READY',         dot:'var(--text2)',  start:true,  pause:false, stop:false },
+    running:      { cls:'running',      label:'RUNNING',       dot:'var(--accent)', start:false, pause:true,  stop:true  },
+    paused:       { cls:'paused',       label:'PAUSED',        dot:'var(--accent4)',start:true,  pause:false, stop:true  },
+    stopped:      { cls:'ready',        label:'STOPPED',       dot:'var(--text2)',  start:true,  pause:false, stop:false },
+    error:        { cls:'error',        label:'ERROR',         dot:'var(--accent3)',start:false, pause:false, stop:false },
+  };
+
+  const st = states[s] || states.ready;
+  badge.className = 'bot-badge ' + st.cls;
+  dot.style.background = st.dot;
+  txt.textContent = st.label;
+
+  document.getElementById('btnStart').disabled = !st.start;
+  document.getElementById('btnPause').disabled = !st.pause;
+  document.getElementById('btnStop').disabled  = !st.stop;
+  document.getElementById('btnInit').disabled  = (s === 'running' || s === 'initializing');
+
+  if (s === 'running' && !sessionStart) {
+    sessionStart = new Date();
+    document.getElementById('sessStart').textContent = sessionStart.toTimeString().split(' ')[0];
+    sessInterval = setInterval(updateDuration, 1000);
+  }
+}
+
+function updateDuration() {
+  if (!sessionStart) return;
+  const d = Math.floor((new Date() - sessionStart) / 1000);
+  const h = String(Math.floor(d/3600)).padStart(2,'0');
+  const m = String(Math.floor((d%3600)/60)).padStart(2,'0');
+  const sc = String(d%60).padStart(2,'0');
+  document.getElementById('sessDur').textContent = `${h}:${m}:${sc}`;
+}
+
+// ── Match rendering ──
+function filterMatches(f, el) {
+  matchFilter = f;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  renderMatches();
+}
+
+function renderMatches() {
+  const minMin  = parseInt(document.getElementById('minMinSlider').value);
+  const minGoal = parseInt(document.getElementById('minGoalSlider').value);
+  const minOdds = parseFloat(document.getElementById('minOddsSlider').value) / 100;
+  const autoOn  = document.getElementById('autoBetToggle').classList.contains('on');
+
+  let list = allMatches;
+  if (matchFilter === 'opp') list = allOpps;
+  else if (matchFilter === '85') list = allMatches.filter(m => m.minute >= 85);
+  else if (matchFilter === '2g') list = allMatches.filter(m => m.goal_diff >= 2);
+
+  const container = document.getElementById('matchList');
+  if (list.length === 0) {
+    container.innerHTML = '<div class="empty">[ No matches found ]</div>';
+    return;
+  }
+
+  container.innerHTML = list.map(m => {
+    const isOpp = m.minute >= minMin && m.goal_diff >= minGoal && m.leading_team !== null;
+    const safeMin = m.minute >= 85;
+    return `
+    <div class="match-card ${isOpp ? 'opp' : ''}" onclick="manualBet(${m.fixture_id})">
+      ${isOpp ? '<div class="opp-tag">OPPORTUNITY</div>' : ''}
+      <div class="mc-top">
+        <span class="mc-league">${m.league} · ${m.country}</span>
+        <span class="mc-min ${safeMin ? 'safe' : 'live'}">${m.minute}'</span>
+      </div>
+      <div class="mc-teams">
+        <span class="mc-team">${m.home_team}</span>
+        <div class="mc-score">
+          <span style="color:#fff">${m.home_score}</span>
+          <span style="color:var(--text2);font-size:14px">:</span>
+          <span style="color:var(--text3)">${m.away_score}</span>
+        </div>
+        <span class="mc-team away">${m.away_team}</span>
+      </div>
+      <div class="mc-footer">
+        ${isOpp ? `<span class="odds-tag odds-good">LIVE ODDS AVAILABLE</span>` : `<span style="font-size:10px;color:var(--text2);font-family:'Share Tech Mono',monospace">MONITORING</span>`}
+        ${isOpp && !autoOn ? `<button class="mc-bet-btn" onclick="event.stopPropagation();manualBet(${m.fixture_id})">BET NOW</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function manualBet(fixture_id) {
+  const autoBet = document.getElementById('autoBetToggle').classList.contains('on');
+  if (autoBet) {
+    addAlert('Auto-bet is ON — bot is handling bets automatically', 'yellow');
+    return;
+  }
+  sendAction('manual_bet', { fixture_id });
+}
+
+// ── Bet log ──
+function renderBetLog() {
+  const tbody = document.getElementById('betLog');
+  if (bets.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">No bets yet</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = bets.slice(0, 100).map(b => {
+    const statusCls = { win:'s-win', loss:'s-loss', placed:'s-pending', failed:'s-failed' }[b.status] || '';
+    const pnlStr = b.pnl !== null ? (b.pnl >= 0 ? '+' : '') + '₦' + fmt(Math.abs(b.pnl)) : '...';
+    const bmLabel = b.bookmaker === 'SportyBet' ? '<span style="color:#ff6b35;font-size:9px">SPORTY</span>' : '<span style="color:#00c4ff;font-size:9px">BETKING</span>';
+    const resultBtns = b.status === 'placed' ? `
+      <div class="result-btns">
+        <button class="rbtn rbtn-win"  onclick="recordResult(${b.id}, true)">WIN</button>
+        <button class="rbtn rbtn-loss" onclick="recordResult(${b.id}, false)">LOSS</button>
+      </div>` : '<span style="color:var(--text2);font-size:9px">—</span>';
+
+    return `<tr>
+      <td>${b.time}</td>
+      <td style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${b.match}">${b.home_team} v ${b.away_team}</td>
+      <td>${bmLabel}</td>
+      <td>${b.odds ? b.odds.toFixed(3) : '—'}</td>
+      <td>₦${b.stake}</td>
+      <td class="${statusCls}">${pnlStr}</td>
+      <td class="${statusCls}">${b.status.toUpperCase()}</td>
+      <td>${resultBtns}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('betBadge').textContent = bets.length + ' BETS';
+}
+
+function recordResult(betId, won) {
+  sendAction('record_result', { bet_id: betId, won });
+}
+
+// ── Alert feed ──
+function addAlert(msg, color) {
+  const feed = document.getElementById('alertFeed');
+  const time = new Date().toTimeString().split(' ')[0];
+  const item = document.createElement('div');
+  item.className = 'alert-item';
+  item.innerHTML = `<span class="a-time">${time}</span><span class="a-${color}">${msg}</span>`;
+  feed.insertBefore(item, feed.firstChild);
+  while (feed.children.length > 30) feed.removeChild(feed.lastChild);
+}
+
+// ── Clock ──
+setInterval(() => {
+  document.getElementById('clock').textContent = new Date().toTimeString().split(' ')[0];
+}, 1000);
+
+// ── Helpers ──
+function fmt(n) {
+  return parseFloat(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// ── Start ──
+connect();
+</script>
+</body>
+</html>
